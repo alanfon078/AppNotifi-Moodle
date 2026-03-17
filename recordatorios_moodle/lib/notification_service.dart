@@ -19,21 +19,23 @@ class NotificationService {
       android: initializationSettingsAndroid,
     );
 
-    await flutterLocalNotificationsPlugin.initialize(initialSettings);
 
-    // Pedir permiso en Android 13+
+    // Agregamos la etiqueta "settings:" que nos pide el compilador
+    await flutterLocalNotificationsPlugin.initialize(
+      settings: initializationSettings, // Si te sigue marcando error aquí, cámbialo por: settings: initializationSettings,
+    );
+
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
   }
 
   Future<void> scheduleTaskNotifications(int taskId, String taskName, String courseName, DateTime dueDate) async {
-    // Definimos los tiempos de las 4 notificaciones
     final timesToNotify = [
-      dueDate.subtract(const Duration(hours: 24)), // 1 día antes
-      dueDate.subtract(const Duration(hours: 12)), // Medio día antes
-      dueDate.subtract(const Duration(hours: 6)),  // El día de la entrega
-      dueDate.subtract(const Duration(hours: 1)),  // 1 hora antes
+      dueDate.subtract(const Duration(hours: 24)),
+      dueDate.subtract(const Duration(hours: 12)),
+      dueDate.subtract(const Duration(hours: 6)),
+      dueDate.subtract(const Duration(hours: 1)),
     ];
 
     final messages = [
@@ -46,14 +48,14 @@ class NotificationService {
     for (int i = 0; i < timesToNotify.length; i++) {
       final scheduledTime = timesToNotify[i];
 
-      // Solo programar si la fecha está en el futuro
       if (scheduledTime.isAfter(DateTime.now())) {
+        // Ajuste V18: Todos los parámetros de zonedSchedule ahora son explícitos
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          int.parse('${taskId}${i}'), // ID único para cada notificación
-          '⏰ $courseName',
-          '${messages[i]} $taskName',
-          tz.TZDateTime.from(scheduledTime, tz.local),
-          const NotificationDetails(
+          id: int.parse('${taskId}${i}'),
+          title: '⏰ $courseName',
+          body: '${messages[i]} $taskName',
+          scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
+          notificationDetails: const NotificationDetails(
             android: AndroidNotificationDetails(
               'moodle_tasks_channel',
               'Recordatorios de Tareas',
@@ -63,7 +65,6 @@ class NotificationService {
             ),
           ),
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         );
       }
     }
