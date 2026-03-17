@@ -21,6 +21,7 @@ class NotificationService {
 
 
     // Agregamos la etiqueta "settings:" que nos pide el compilador
+// Agregamos la etiqueta "settings:" que nos pide el compilador
     await flutterLocalNotificationsPlugin.initialize(
       settings: initializationSettings, // Si te sigue marcando error aquí, cámbialo por: settings: initializationSettings,
     );
