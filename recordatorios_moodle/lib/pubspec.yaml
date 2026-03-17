@@ -1,0 +1,5 @@
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0              # Para hacer las peticiones a Moodle
+  flutter_secure_storage: ^9.0.0  # Para guardar el token de forma encriptada
