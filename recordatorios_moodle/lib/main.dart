@@ -17,7 +17,7 @@ class RecordatoriosMoodleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Recordatorios Moodle',
-      debugShowCheckedModeBanner: false, // Quita la etiqueta de "DEBUG"
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
