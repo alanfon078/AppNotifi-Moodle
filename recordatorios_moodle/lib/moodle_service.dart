@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MoodleService {
-  // Inicializamos el almacenamiento seguro
+  // Inicializar el almacenamiento seguro
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   
   final String _baseUrl = 'https://pev.surguanajuato.tecnm.mx';
@@ -37,7 +37,7 @@ class MoodleService {
     return false; // Si llegamos aquí, algo falló
   }
 
-  // Nueva función para obtener las tareas
+  // Función para obtener las tareas
   Future<List<dynamic>> getUpcomingTasks() async {
     final token = await getToken();
     if (token == null) return [];

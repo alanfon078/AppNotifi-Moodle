@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'moodle_service.dart'; // Importaremos nuestro "backend" local
+import 'moodle_service.dart'; // Importar el backend local
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // Llamamos a nuestro servicio (Backend)
+    //Llamar al backend
     final success = await _moodleService.loginAndSaveToken(username, password);
 
     setState(() {
@@ -37,10 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success) {
-      // Limpiamos las contraseñas de la memoria de los controladores por seguridad
+      // Limpiar las contraseñas de la memoria de los controladores por seguridad
       _passwordController.clear(); 
       
-      // Navegamos a la siguiente pantalla (Asegúrate de crear un DashboardScreen)
+      // Navegar a la siguiente pantalla
       Navigator.pushReplacementNamed(context, '/dashboard'); 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

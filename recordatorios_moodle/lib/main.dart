@@ -22,9 +22,9 @@ class RecordatoriosMoodleApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      // Definimos la ruta inicial
+      // Definir la ruta inicial
       initialRoute: '/login',
-      // Definimos el mapa de rutas
+      // Definir el mapa de rutas
       routes: {
         '/login': (context) => LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
