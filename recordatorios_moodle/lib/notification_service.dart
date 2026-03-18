@@ -7,28 +7,28 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
     tz.initializeTimeZones();
 
-    final AndroidInitializationSettings initializationSettingsAndroid =
+    const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
     );
 
-    // En la v14, initialize recibe el objeto directamente (sin la etiqueta "settings:")
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(settings: initializationSettings);
 
-    // Solicitar permisos para Android 13+ (En v14 el método se llama requestPermission)
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestPermission();
+        ?.requestNotificationsPermission();
   }
 
-  Future<void> scheduleTaskNotifications(int taskId, String taskName, String courseName, DateTime dueDate) async {
+  Future<void> scheduleTaskNotifications(
+      int taskId, String taskName, String courseName, DateTime dueDate) async {
     final timesToNotify = [
       dueDate.subtract(const Duration(hours: 24)),
       dueDate.subtract(const Duration(hours: 12)),
@@ -40,19 +40,20 @@ class NotificationService {
       '¡Mañana vence esta tarea!',
       'Quedan 12 horas para tu entrega.',
       '¡Hoy vence esta tarea!',
-      '¡URGENTE! Queda 1 hora para el cierre.'
+      '¡URGENTE! Queda 1 hora para el cierre.',
     ];
 
     for (int i = 0; i < timesToNotify.length; i++) {
       final scheduledTime = timesToNotify[i];
 
       if (scheduledTime.isAfter(DateTime.now())) {
+        // v21: zonedSchedule ahora usa parámetros nombrados obligatorios
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          int.parse('${taskId}${i}'),         // 1. ID
-          '⏰ $courseName',                     // 2. Título
-          '${messages[i]} $taskName',         // 3. Cuerpo del mensaje
-          tz.TZDateTime.from(scheduledTime, tz.local), // 4. Fecha programada
-          NotificationDetails(          // 5. Detalles de la notificación
+          id: int.parse('$taskId$i'),
+          title: '⏰ $courseName',
+          body: '${messages[i]} $taskName',
+          scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
+          notificationDetails: const NotificationDetails(
             android: AndroidNotificationDetails(
               'moodle_tasks_channel',
               'Recordatorios de Tareas',
@@ -61,8 +62,7 @@ class NotificationService {
               priority: Priority.high,
             ),
           ),
-          androidAllowWhileIdle: true,
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
       }
     }
