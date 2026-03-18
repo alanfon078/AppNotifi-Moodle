@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'moodle_service.dart'; // Importar el backend local
+import 'moodle_service.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -10,13 +10,37 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final MoodleService _moodleService = MoodleService();
-  
-  bool _isLoading = false;
+
+  bool _isLoading = true;
+  bool _rememberCredentials = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAutoLogin();
+  }
+
+  Future<void> _checkAutoLogin() async {
+    // Si ya tiene token válido, ir directo al dashboard
+    final loggedIn = await _moodleService.isLoggedIn();
+    if (loggedIn) {
+      if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
+      return;
+    }
+
+    // Si no, cargar credenciales guardadas si existen
+    final saved = await _moodleService.getSavedCredentials();
+    if (saved['remember'] == 'true') {
+      _usernameController.text = saved['username'] ?? '';
+      _passwordController.text = saved['password'] ?? '';
+      setState(() { _rememberCredentials = true; });
+    }
+
+    setState(() { _isLoading = false; });
+  }
 
   void _handleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() { _isLoading = true; });
 
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
@@ -29,19 +53,17 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    //Llamar al backend
-    final success = await _moodleService.loginAndSaveToken(username, password);
+    final success = await _moodleService.loginAndSaveToken(
+      username,
+      password,
+      rememberCredentials: _rememberCredentials,
+    );
 
-    setState(() {
-      _isLoading = false;
-    });
+    setState(() { _isLoading = false; });
 
     if (success) {
-      // Limpiar las contraseñas de la memoria de los controladores por seguridad
-      _passwordController.clear(); 
-      
-      // Navegar a la siguiente pantalla
-      Navigator.pushReplacementNamed(context, '/dashboard'); 
+      if (!_rememberCredentials) _passwordController.clear();
+      if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Credenciales incorrectas o error de red')),
@@ -51,13 +73,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text('Recordatorios Moodle')),
-      body: Padding(
+      body: SingleChildScrollView(  // ← Esto soluciona el overflow
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            SizedBox(height: 60),  // ← Espacio superior para centrar visualmente
             Icon(Icons.school, size: 80, color: Colors.blue),
             SizedBox(height: 30),
             TextField(
@@ -71,24 +100,33 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 16),
             TextField(
               controller: _passwordController,
-              obscureText: true, // Oculta la contraseña
+              obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Contraseña',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.lock),
               ),
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Checkbox(
+                  value: _rememberCredentials,
+                  onChanged: (val) => setState(() => _rememberCredentials = val ?? false),
+                ),
+                Text('Recordar mis datos'),
+              ],
+            ),
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
-                child: _isLoading 
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text('Iniciar Sesión', style: TextStyle(fontSize: 18)),
+                child: Text('Iniciar Sesión', style: TextStyle(fontSize: 18)),
               ),
             ),
+            SizedBox(height: 20), // ← Espacio inferior para que no quede pegado
           ],
         ),
       ),

@@ -3,28 +3,30 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class MoodleService {
-  // Inicializar el almacenamiento seguro
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  
   final String _baseUrl = 'https://pev.surguanajuato.tecnm.mx';
 
-  // Función para hacer login y guardar el token
-  Future<bool> loginAndSaveToken(String username, String password) async {
+  Future<bool> loginAndSaveToken(String username, String password, {bool rememberCredentials = false}) async {
     final url = Uri.parse('$_baseUrl/login/token.php?username=$username&password=$password&service=moodle_mobile_app');
 
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-
         if (data.containsKey('token')) {
-          final token = data['token'];
-          
-          // Guardamos el token encriptado en el dispositivo, no en texto plano.
-          await _secureStorage.write(key: 'moodle_token', value: token);
+          await _secureStorage.write(key: 'moodle_token', value: data['token']);
           print('✅ Token guardado de forma segura.');
-          return true; // Login exitoso
+
+          if (rememberCredentials) {
+            await _secureStorage.write(key: 'saved_username', value: username);
+            await _secureStorage.write(key: 'saved_password', value: password);
+            await _secureStorage.write(key: 'remember_credentials', value: 'true');
+          } else {
+            await _secureStorage.delete(key: 'saved_username');
+            await _secureStorage.delete(key: 'saved_password');
+            await _secureStorage.write(key: 'remember_credentials', value: 'false');
+          }
+          return true;
         } else if (data.containsKey('error')) {
           print('❌ Error de Moodle: ${data['error']}');
           return false;
@@ -33,24 +35,37 @@ class MoodleService {
     } catch (e) {
       print('⚠️ Error de red o ejecución: $e');
     }
-    
-    return false; // Si llegamos aquí, algo falló
+    return false;
   }
 
-  // Función para obtener las tareas
+  // Verificar si hay sesión activa
+  Future<bool> isLoggedIn() async {
+    final token = await _secureStorage.read(key: 'moodle_token');
+    return token != null && token.isNotEmpty;
+  }
+
+  // Leer credenciales guardadas
+  Future<Map<String, String?>> getSavedCredentials() async {
+    final remember = await _secureStorage.read(key: 'remember_credentials');
+    if (remember == 'true') {
+      return {
+        'username': await _secureStorage.read(key: 'saved_username'),
+        'password': await _secureStorage.read(key: 'saved_password'),
+        'remember': 'true',
+      };
+    }
+    return {'remember': 'false'};
+  }
+
   Future<List<dynamic>> getUpcomingTasks() async {
     final token = await getToken();
     if (token == null) return [];
-
     final url = Uri.parse('$_baseUrl/webservice/rest/server.php?wstoken=$token&wsfunction=core_calendar_get_calendar_upcoming_view&moodlewsrestformat=json');
-
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data.containsKey('events')) {
-          return data['events'];
-        }
+        if (data.containsKey('events')) return data['events'];
       }
     } catch (e) {
       print('Error obteniendo tareas: $e');
@@ -58,12 +73,10 @@ class MoodleService {
     return [];
   }
 
-  // Función auxiliar para leer el token cuando queramos consultar las tareas
   Future<String?> getToken() async {
     return await _secureStorage.read(key: 'moodle_token');
   }
 
-  // Función para cerrar sesión (borrar el token)
   Future<void> logout() async {
     await _secureStorage.delete(key: 'moodle_token');
   }
