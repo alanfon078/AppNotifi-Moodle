@@ -34,30 +34,7 @@ class NotificationService {
 
   Future<void> scheduleTaskNotifications(
       int taskId, String taskName, String courseName, DateTime dueDate) async {
-
-    // ── PRUEBA INMEDIATA: llega en 10 segundos ──
-    final testTime = DateTime.now().add(const Duration(seconds: 10));
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id: 9999,
-      title: '🔔 PRUEBA',
-      body: 'Si ves esto, las notificaciones funcionan ✅',
-      scheduledDate: tz.TZDateTime.from(testTime, tz.local),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'moodle_tasks_channel',
-          'Recordatorios de Tareas',
-          channelDescription: 'Notificaciones para tareas próximas',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
-    // ── FIN PRUEBA ──
-
-    // timesToNotify y messages deben tener el mismo número de elementos
     final timesToNotify = [
-      dueDate.subtract(const Duration(minutes: 2)), // PRUEBA: notifica en 2 min
       dueDate.subtract(const Duration(hours: 24)),
       dueDate.subtract(const Duration(hours: 12)),
       dueDate.subtract(const Duration(hours: 6)),
@@ -65,7 +42,6 @@ class NotificationService {
     ];
 
     final messages = [
-      '🔔 PRUEBA: Notificación de prueba activa.',
       '¡Mañana vence esta tarea!',
       'Quedan 12 horas para tu entrega.',
       '¡Hoy vence esta tarea!',
@@ -77,7 +53,7 @@ class NotificationService {
 
       if (scheduledTime.isAfter(DateTime.now())) {
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          id: taskId * 10 + i, // Evita IDs duplicados con parse
+          id: taskId * 10 + i,
           title: '⏰ $courseName',
           body: '${messages[i]} $taskName',
           scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
@@ -92,6 +68,7 @@ class NotificationService {
           ),
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
+        print('🔔 Notificación programada: ${messages[i]} — $scheduledTime');
       }
     }
   }

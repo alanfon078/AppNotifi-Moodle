@@ -23,28 +23,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadTasks() async {
-
-    // ── PRUEBA: siempre programa esto, sin importar si hay tareas ──
-    final DateTime examDate = DateTime(2026, 3, 25, 11, 0, 0);
-    await _notificationService.scheduleTaskNotifications(
-      999,
-      'Examen Final',
-      'Tu Materia',
-      examDate,
-    );
-    // ── FIN PRUEBA ──
-
     final tasks = await _moodleService.getUpcomingTasks();
 
-     for (var task in tasks) {
-       final dueDate = DateTime.fromMillisecondsSinceEpoch(task['timestart'] * 1000);
-       await _notificationService.scheduleTaskNotifications(
-         task['id'],
-         task['name'],
-         task['course']['fullname'],
-         dueDate,
-       );
-     }
+    for (var task in tasks) {
+      final dueDate = DateTime.fromMillisecondsSinceEpoch(task['timestart'] * 1000);
+      await _notificationService.scheduleTaskNotifications(
+        task['id'],
+        task['name'],
+        task['course']['fullname'],
+        dueDate,
+      );
+    }
 
     setState(() {
       _tasks = tasks;
