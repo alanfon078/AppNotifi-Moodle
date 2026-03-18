@@ -1,5 +1,4 @@
 async function getUpcomingTasks() {
-  // Aquí pegas el token largo que te dio el script anterior
   const token = ''; 
   
   // Endpoint principal para consumir los Web Services de Moodle
