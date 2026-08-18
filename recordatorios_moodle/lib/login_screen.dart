@@ -13,6 +13,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = true;
   bool _rememberCredentials = false;
+  bool _ocultarPassword = true;
 
   @override
   void initState() {
@@ -21,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _checkAutoLogin() async {
-    // Si ya tiene token válido, ir directo al dashboard
+    // Si ya tiene token valido, ir directo al dashboard
     final loggedIn = await _moodleService.isLoggedIn();
     if (loggedIn) {
       if (mounted) Navigator.pushReplacementNamed(context, '/dashboard');
@@ -81,12 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text('Recordatorios Moodle')),
-      body: SingleChildScrollView(  // ← Esto soluciona el overflow
+      body: SingleChildScrollView(  // <- Esto soluciona el overflow
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 60),  // ← Espacio superior para centrar visualmente
+            SizedBox(height: 60),  // <- Espacio superior para centrar visualmente
             Icon(Icons.school, size: 80, color: Colors.blue),
             SizedBox(height: 30),
             TextField(
@@ -100,11 +101,21 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 16),
             TextField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _ocultarPassword, // <- Se asigna la variable de estado
               decoration: InputDecoration(
                 labelText: 'Contraseña',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.lock),
+                suffixIcon: IconButton( // <- Boton para mostrar/ocultar
+                  icon: Icon(
+                    _ocultarPassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _ocultarPassword = !_ocultarPassword;
+                    });
+                  },
+                ),
               ),
             ),
             SizedBox(height: 8),
@@ -126,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Text('Iniciar Sesión', style: TextStyle(fontSize: 18)),
               ),
             ),
-            SizedBox(height: 20), // ← Espacio inferior para que no quede pegado
+            SizedBox(height: 20), // <- Espacio inferior para que no quede pegado
           ],
         ),
       ),
